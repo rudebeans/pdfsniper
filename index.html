@@ -180,7 +180,7 @@
         drop-shadow(0 0 60px rgba(57,255,122,0.25));
     }
     .brand-logo svg {
-      height: 38px;
+      height: 36px;
       width: auto;
       display: block;
     }
@@ -916,6 +916,78 @@
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(57,255,122,0.15); border-radius: 2px; }
+
+    /* ── Bullet impact ── */
+    .bullet-impact {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+    }
+    /* Core hole */
+    .bullet-hole {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow:
+        0 0 4px rgba(255,255,255,1),
+        0 0 10px rgba(57,255,122,0.9),
+        0 0 22px rgba(57,255,122,0.5);
+      animation: hole-fade 0.9s ease-out forwards;
+    }
+    /* Muzzle flash ring */
+    .bullet-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 4px; height: 4px;
+      border: 1.5px solid rgba(57,255,122,0.9);
+      border-radius: 50%;
+      animation: ring-expand 0.45s ease-out forwards;
+    }
+    /* Second outer ring */
+    .bullet-ring2 {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 4px; height: 4px;
+      border: 1px solid rgba(57,255,122,0.4);
+      border-radius: 50%;
+      animation: ring-expand2 0.6s ease-out forwards;
+      animation-delay: 0.05s;
+    }
+    /* Sparks */
+    .bullet-spark {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 1.5px;
+      background: linear-gradient(to bottom, #fff, rgba(57,255,122,0.6));
+      transform-origin: bottom center;
+      border-radius: 1px;
+      animation: spark-fly 0.5s ease-out forwards;
+    }
+    @keyframes hole-fade {
+      0%   { opacity: 1; transform: translate(-50%,-50%) scale(1.4); }
+      20%  { transform: translate(-50%,-50%) scale(1); }
+      70%  { opacity: 0.8; }
+      100% { opacity: 0; }
+    }
+    @keyframes ring-expand {
+      0%   { width: 4px; height: 4px; opacity: 1; }
+      100% { width: 48px; height: 48px; opacity: 0; }
+    }
+    @keyframes ring-expand2 {
+      0%   { width: 4px; height: 4px; opacity: 0.6; }
+      100% { width: 72px; height: 72px; opacity: 0; }
+    }
+    @keyframes spark-fly {
+      0%   { height: var(--len); opacity: 1; }
+      100% { height: calc(var(--len) * 0.3); opacity: 0;
+             transform: translate(-50%, calc(-100% - var(--dist))) rotate(var(--angle)); }
+    }
   </style>
 </head>
 <body>
@@ -1440,6 +1512,54 @@
     // Hide when leaving window
     document.addEventListener('mouseleave', () => { cursorEl.style.opacity = '0'; });
     document.addEventListener('mouseenter', () => { cursorEl.style.opacity = '1'; });
+
+    // ── Bullet impacts ────────────────────────────────────────────────────
+    const INTERACTIVE = 'a, button, input, label, select, textarea, [role="button"], .tab, .tld-btn, .card, .hero-card';
+    document.addEventListener('click', e => {
+      if (e.target.closest(INTERACTIVE)) return;
+      shootBullet(e.clientX, e.clientY);
+    });
+
+    function shootBullet(x, y) {
+      const wrap = document.createElement('div');
+      wrap.className = 'bullet-impact';
+      wrap.style.left = x + 'px';
+      wrap.style.top  = y + 'px';
+
+      // Core hole
+      const hole = document.createElement('div');
+      hole.className = 'bullet-hole';
+
+      // Two expanding rings
+      const ring1 = document.createElement('div');
+      ring1.className = 'bullet-ring';
+      const ring2 = document.createElement('div');
+      ring2.className = 'bullet-ring2';
+
+      // Sparks — 8 radiating lines at random-ish angles
+      const sparkCount = 8;
+      for (let i = 0; i < sparkCount; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'bullet-spark';
+        const angle  = (i / sparkCount) * 360 + (Math.random() * 20 - 10);
+        const len    = 6 + Math.random() * 10;
+        const dist   = 8 + Math.random() * 14;
+        spark.style.setProperty('--angle', angle + 'deg');
+        spark.style.setProperty('--len',   len   + 'px');
+        spark.style.setProperty('--dist',  dist  + 'px');
+        spark.style.transform = `translate(-50%, -100%) rotate(${angle}deg)`;
+        spark.style.height    = len + 'px';
+        wrap.appendChild(spark);
+      }
+
+      wrap.appendChild(hole);
+      wrap.appendChild(ring1);
+      wrap.appendChild(ring2);
+      document.body.appendChild(wrap);
+
+      // Clean up after longest animation
+      setTimeout(() => wrap.remove(), 950);
+    }
 
     // ── Contextual states ─────────────────────────────────────────────────
     const CURSOR_STATES = ['cur-click', 'cur-acquire', 'cur-occupied', 'cur-text'];
