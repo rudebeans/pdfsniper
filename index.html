@@ -159,65 +159,30 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 20px;
       margin-bottom: 40px;
     }
-    .brand-reticle {
-      position: relative;
-      width: 32px; height: 32px;
-      flex-shrink: 0;
-    }
-    .brand-reticle::before,
-    .brand-reticle::after {
-      content: '';
-      position: absolute;
-      border: 1px solid var(--green);
-    }
-    .brand-reticle::before {
-      inset: 0;
-      border-radius: 50%;
-      opacity: 0.7;
-    }
-    .brand-reticle::after {
-      inset: 6px;
-      border-radius: 50%;
-      opacity: 0.4;
-    }
-    .brand-crosshair {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-    }
-    .brand-crosshair::before,
-    .brand-crosshair::after {
-      content: '';
-      position: absolute;
-      background: var(--green);
-      opacity: 0.6;
-    }
-    .brand-crosshair::before { width: 1px; height: 20px; top: 6px; }
-    .brand-crosshair::after  { height: 1px; width: 20px; left: 6px; }
-
-    .brand-name {
-      font-family: "Share Tech", sans-serif;
-      font-weight: 400;
-      font-size: 33px;
-      letter-spacing: -0.05em;
-      text-transform: uppercase;
+    .brand-logo {
+      display: block;
       color: var(--green);
       text-decoration: none;
-      text-shadow:
-        0 0 8px rgba(57,255,122,0.7),
-        0 0 24px rgba(57,255,122,0.35),
-        0 0 48px rgba(57,255,122,0.15);
-      transition: text-shadow .2s ease;
+      flex-shrink: 0;
+      filter:
+        drop-shadow(0 0 6px rgba(57,255,122,0.7))
+        drop-shadow(0 0 18px rgba(57,255,122,0.35))
+        drop-shadow(0 0 40px rgba(57,255,122,0.15));
+      transition: filter .2s ease;
     }
-    .brand-name:hover {
-      text-shadow:
-        0 0 10px rgba(57,255,122,0.9),
-        0 0 32px rgba(57,255,122,0.5),
-        0 0 64px rgba(57,255,122,0.25);
+    .brand-logo:hover {
+      filter:
+        drop-shadow(0 0 8px rgba(57,255,122,0.9))
+        drop-shadow(0 0 28px rgba(57,255,122,0.55))
+        drop-shadow(0 0 60px rgba(57,255,122,0.25));
+    }
+    .brand-logo svg {
+      height: 36px;
+      width: auto;
+      display: block;
     }
     .brand-sep {
       width: 1px; height: 18px;
@@ -989,10 +954,11 @@
 
     <!-- Brand bar -->
     <div class="brand">
-      <div class="brand-reticle">
-        <div class="brand-crosshair"></div>
-      </div>
-      <a href="/" class="brand-name">URLsniper</a>
+      <a href="/" class="brand-logo" aria-label="URLsniper — Home">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 516.36 137.56" aria-hidden="true">
+          <path fill="currentColor" d="M123.55,36.92c1.35,1.31,2.02,3.43,2.02,6.35v14.28c0,.06,0,.12,0,.19h10.01c.02-.44.03-.88.03-1.34v-12.08c0-6.23-1.67-10.79-5.02-13.68-3.35-2.89-8.29-4.33-14.83-4.33h-20.66v31.43h10.04v-22.77h12.01c2.92,0,5.06.65,6.41,1.96ZM116.01,72.99l14.29,34.12h10.97l-14.54-34.12h-10.71ZM217.34,72.99c.21.82.35,1.7.35,2.68v14.01c0,2.39-.89,4.43-2.66,6.12-1.77,1.69-4.08,2.54-6.93,2.54h-16.39v8.77h15.24c6.7,0,11.83-1.63,15.41-4.91,3.58-3.27,5.37-8.18,5.37-14.72v-7.62c0-1.75-.13-5.37-.35-6.88h-10.04ZM199.79,52.51v-8.77c0-2.38.88-4.42,2.66-6.12,1.77-1.69,4.08-2.54,6.93-2.54h16.51v-8.77h-15.35c-6.7,0-11.83,1.64-15.41,4.91-3.58,3.27-5.37,8.18-5.37,14.72v4.39c0,2.35.23,5.48.67,7.42h10.4c-.68-1.23-1.03-3.64-1.03-5.23ZM95.09,107.11h10.04v-34.12h-10.04v34.12ZM160.54,72.99h-10.04v34.12h35.79v-8.77h-25.74v-25.35ZM70.62,57.74h10.04v-31.43h-10.04v31.43ZM391.88,34.73h27.82v-8.43h-37.86v31.43h10.04v-23ZM160.54,26.3h-10.04v31.43h10.04v-31.43ZM47.42,26.3h-10.04v31.43h10.04v-31.43ZM70.62,89.68c0,2.39-.89,4.43-2.66,6.12-1.77,1.69-4.08,2.54-6.93,2.54h-4.04c-2.85,0-5.16-.85-6.93-2.54-1.77-1.69-2.66-3.73-2.66-6.12v-16.69h-10.04v14.5c0,6.54,1.79,11.45,5.37,14.72,3.58,3.27,8.72,4.91,15.41,4.91h1.73c6.7,0,11.83-1.63,15.41-4.91,3.58-3.27,5.37-8.18,5.37-14.72v-14.5h-10.04v16.69ZM273.44,98.57l-5.8-25.58h-9.21l7.85,34.12h16.51v-34.12h-9.35v25.58ZM365.27,30.63c-3.35-2.89-8.29-4.33-14.83-4.33h-20.66v31.43h10.04v-22.77h12.01c2.92,0,5.06.65,6.41,1.96,1.35,1.31,2.02,3.43,2.02,6.35v13.35c0,.38-.01.75-.04,1.11h10c.05-.73.08-1.48.08-2.26v-11.16c0-6.23-1.67-10.79-5.02-13.68ZM391.88,72.99h-10.04v34.12h37.86v-8.43h-27.82v-25.69ZM329.78,107.11h10.04v-34.12h-10.04v34.12ZM461.95,71.67c6.93-2.15,10.39-7.58,10.39-16.28v-11.08c0-6.23-1.67-10.79-5.02-13.68-3.35-2.89-8.29-4.33-14.83-4.33h-20.66v80.81h10.04v-33.48h10.27l14.89,33.48h10.97l-16.05-35.44ZM453.87,64.98h-12.01v-30.01h12.01c2.92,0,5.06.65,6.41,1.96,1.35,1.31,2.02,3.43,2.02,6.35v13.28c0,2.93-.67,5.06-2.02,6.41-1.35,1.35-3.48,2.02-6.41,2.02ZM419.8,61.84h-13.11v7.07h13.11c1.95,0,3.54-1.58,3.54-3.54s-1.58-3.54-3.54-3.54ZM273.44,57.74h9.35v-31.43h-9.35v31.43ZM293.18,34.73h8.08v23h10.04v-23h8.08v-8.43h-26.21v8.43ZM239.27,107.11h9.35v-34.12h-9.35v34.12ZM255.67,26.3h-16.39v31.43h9.35v-22.89l5.35,22.89h9.18l-7.49-31.43ZM311.31,72.99h-10.04v25.69h-8.08v8.43h26.21v-8.43h-8.08v-25.69Z"/>
+        </svg>
+      </a>
       <div class="brand-sep"></div>
       <span class="brand-sub">Domain acquisition system</span>
     </div>
