@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URLsniper — Acquire Your Domain</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Bebas+Neue&family=Share+Tech&family=Space+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:        #39ff7a;
+      --green-dim:    rgba(57, 255, 122, 0.55);
+      --green-glow:   rgba(57, 255, 122, 0.12);
+      --red:          #ff2020;
+      --red-dim:      rgba(255, 32, 32, 0.55);
+      --amber:        #ffb800;
+      --text:         #dde8e0;
+      --text-muted:   rgba(221, 232, 224, 0.45);
+      --text-dim:     rgba(221, 232, 224, 0.25);
+      --glass:        rgba(4, 10, 7, 0.78);
+      --glass-border: rgba(57, 255, 122, 0.12);
+      --glass-hover:  rgba(57, 255, 122, 0.07);
+      --blur:         blur(24px);
+      --r-lg:         14px;
+      --r-md:         8px;
+      --r-sm:         4px;
+      --mono:         'Space Mono', monospace;
+      --cond:         'Barlow Condensed', sans-serif;
+      --sans:         'Space Grotesk', sans-serif;
+    }
+
+    html, body { min-height: 100%; }
+
+    body {
+      font-family: var(--sans);
+      background: #050d08;
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Background image ── */
+    .bg-image {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    /* Scan-line overlay */
+    .bg-image::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background: repeating-linear-gradient(
+        180deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.12) 2px,
+        rgba(0, 0, 0, 0.12) 4px
+      );
+      animation: scanroll 8s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes scanroll {
+      from { background-position: 0 0; }
+      to   { background-position: 0 100px; }
+    }
+
+    /* ── Big sweep line ── */
+    .bg-sweep {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .bg-sweep::before {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      top: -6px;
+      height: 6px;
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(57,255,122,0.08) 40%,
+        rgba(57,255,122,0.22) 60%,
+        rgba(255,255,255,0.06) 80%,
+        transparent 100%
+      );
+      animation: bigsweep 9s cubic-bezier(0.4,0,0.6,1) infinite;
+      animation-delay: 2s;
+    }
+    @keyframes bigsweep {
+      0%   { top: -6px; opacity: 0; }
+      3%   { opacity: 1; }
+      97%  { opacity: 0.8; }
+      100% { top: 100vh; opacity: 0; }
+    }
+
+    /* ── Glitch bursts on the bg image ── */
+    @keyframes glitch {
+      0%,  89%,  100% { transform: none;             clip-path: none; opacity: 0.38; }
+      90%              { transform: translateX(-5px);  clip-path: inset(18% 0 58% 0); opacity: 0.55; }
+      91%              { transform: translateX(5px);   clip-path: inset(62% 0 14% 0); opacity: 0.55; }
+      92%              { transform: translateX(-2px);  clip-path: none;               opacity: 0.38; }
+      93%              { transform: translateX(3px);   clip-path: inset(38% 0 38% 0); opacity: 0.5;  }
+      94%              { transform: none;              clip-path: none;               opacity: 0.38; }
+    }
+    .bg-image img {
+      position: absolute;
+      right: 0; top: 0;
+      height: 100%;
+      width: 60%;
+      object-fit: cover;
+      object-position: center top;
+      opacity: 0.38;
+      mix-blend-mode: luminosity;
+      animation: glitch 12s steps(1) infinite;
+      animation-delay: 4s;
+    }
+    /* Dark gradient from left, fading out the image */
+    .bg-image::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, #050d08 32%, rgba(5,13,8,0.6) 60%, rgba(5,13,8,0.2) 100%),
+        linear-gradient(180deg, rgba(5,13,8,0.5) 0%, transparent 20%, transparent 80%, #050d08 100%);
+    }
+
+    /* ── Tactical grid overlay ── */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(57,255,122,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(57,255,122,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* ── Page layout ── */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 52px 24px 100px;
+    }
+
+    /* ── Header / brand ── */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+    .brand-reticle {
+      position: relative;
+      width: 32px; height: 32px;
+      flex-shrink: 0;
+    }
+    .brand-reticle::before,
+    .brand-reticle::after {
+      content: '';
+      position: absolute;
+      border: 1px solid var(--green);
+    }
+    .brand-reticle::before {
+      inset: 0;
+      border-radius: 50%;
+      opacity: 0.7;
+    }
+    .brand-reticle::after {
+      inset: 6px;
+      border-radius: 50%;
+      opacity: 0.4;
+    }
+    .brand-crosshair {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+    }
+    .brand-crosshair::before,
+    .brand-crosshair::after {
+      content: '';
+      position: absolute;
+      background: var(--green);
+      opacity: 0.6;
+    }
+    .brand-crosshair::before { width: 1px; height: 20px; top: 6px; }
+    .brand-crosshair::after  { height: 1px; width: 20px; left: 6px; }
+
+    .brand-name {
+      font-family: "Share Tech", sans-serif;
+      font-weight: 400;
+      font-size: 33px;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+      color: var(--green);
+      text-decoration: none;
+      text-shadow:
+        0 0 8px rgba(57,255,122,0.7),
+        0 0 24px rgba(57,255,122,0.35),
+        0 0 48px rgba(57,255,122,0.15);
+      transition: text-shadow .2s ease;
+    }
+    .brand-name:hover {
+      text-shadow:
+        0 0 10px rgba(57,255,122,0.9),
+        0 0 32px rgba(57,255,122,0.5),
+        0 0 64px rgba(57,255,122,0.25);
+    }
+    .brand-sep {
+      width: 1px; height: 18px;
+      background: var(--glass-border);
+    }
+    .brand-sub {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ── Hero headline ── */
+    .hero { margin-bottom: 44px; }
+
+    .hero-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--green-dim);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 24px; height: 1px;
+      background: var(--green);
+      opacity: 0.5;
+    }
+
+    h1 {
+      font-family: "Bebas Neue", sans-serif;
+      font-weight: 400;
+      font-size: clamp(54px, 9vw, 96px);
+      line-height: 0.9;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    h1 span { color: var(--green); }
+
+    .hero-sub {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── Search panel ── */
+    .search-panel {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-lg);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      padding: 18px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    /* Corner brackets */
+    .search-panel::before,
+    .search-panel::after {
+      content: '';
+      position: absolute;
+      width: 12px; height: 12px;
+      border-color: var(--green);
+      border-style: solid;
+      opacity: 0.4;
+    }
+    .search-panel::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+    .search-panel::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    #keyword {
+      flex: 1;
+      padding: 13px 16px;
+      font-family: var(--mono);
+      font-size: 14px;
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-md);
+      background: rgba(57,255,122,0.04);
+      color: var(--text);
+      outline: none;
+      transition: border-color .18s, background .18s;
+      letter-spacing: 0.04em;
+      autocorrect: off;
+    }
+    #keyword::placeholder { color: var(--text-dim); }
+    #keyword:focus {
+      border-color: rgba(57,255,122,0.35);
+      background: rgba(57,255,122,0.06);
+    }
+
+    #searchBtn {
+      padding: 13px 22px;
+      border: 1px solid var(--green);
+      border-radius: var(--r-md);
+      cursor: pointer;
+      background: var(--green);
+      color: #050d08;
+      font-family: var(--cond);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      transition: all .18s;
+      box-shadow: 0 0 20px rgba(57,255,122,0.25);
+    }
+    #searchBtn:hover  { background: #fff; border-color: #fff; box-shadow: 0 0 32px rgba(57,255,122,0.4); }
+    #searchBtn:disabled { opacity: .4; cursor: default; box-shadow: none; }
+
+    /* ── TLD chips ── */
+    .tlds {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      border: 1px solid rgba(57,255,122,0.15);
+      border-radius: 4px;
+      padding: 5px 12px;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      background: transparent;
+      transition: all .14s;
+      user-select: none;
+      letter-spacing: 0.05em;
+    }
+    .chip:hover { color: var(--text-muted); border-color: rgba(57,255,122,0.3); }
+    .chip:has(input:checked) {
+      background: rgba(57,255,122,0.1);
+      border-color: rgba(57,255,122,0.45);
+      color: var(--green);
+    }
+    .chip input { display: none; }
+
+    /* ── Recalibrate button ── */
+    #recalibrateBtn {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border: 1px solid #ffffff;
+      border-radius: var(--r-md);
+      background: #ffffff;
+      color: #050d08;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .18s;
+      margin-bottom: 18px;
+      font-weight: 700;
+    }
+    #recalibrateBtn.visible { display: flex; }
+    #recalibrateBtn:hover {
+      border-color: #ffffff;
+      color: #050d08;
+      background: rgba(255,255,255,0.85);
+      box-shadow: 0 0 18px rgba(255,255,255,0.35);
+    }
+    .recal-icon {
+      display: inline-block;
+      transition: transform .4s ease;
+    }
+    #recalibrateBtn:hover .recal-icon { transform: rotate(-180deg); }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--glass-border);
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 9px 18px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-dim);
+      border-bottom: 1px solid transparent;
+      margin-bottom: -1px;
+      transition: color .14s;
+    }
+    .tab:hover { color: var(--text-muted); }
+    .tab.active { color: var(--green); border-bottom-color: var(--green); }
+    .tab-count {
+      display: inline-block;
+      background: rgba(57,255,122,0.1);
+      border-radius: 3px;
+      padding: 0px 6px;
+      font-size: 10px;
+      margin-left: 6px;
+      color: var(--green-dim);
+    }
+    .tab.active .tab-count { background: var(--green); color: #050d08; }
+
+    /* ── Progress bar ── */
+    #progress-bar {
+      height: 1px;
+      background: #ffffff;
+      box-shadow: 0 0 8px rgba(255,255,255,0.5);
+      width: 0%;
+      transition: width .25s ease;
+      margin-bottom: 14px;
+    }
+
+    /* ── Status message ── */
+    #status-msg {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      min-height: 16px;
+    }
+
+    /* ── Panels ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── Results grid ── */
+    .results { display: grid; gap: 6px; }
+
+    /* ── Base card ── */
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-md);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all .18s;
+    }
+    .card:hover { background: var(--glass-hover); border-color: rgba(57,255,122,0.2); }
+
+    .card.is-available {
+      background: rgba(57, 255, 122, 0.06);
+      border-color: rgba(57, 255, 122, 0.32);
+      box-shadow: 0 0 0 1px rgba(57,255,122,0.08), 0 4px 24px rgba(57,255,122,0.08);
+    }
+    .card.is-available .domain { color: #ffffff; }
+    .card.is-taken  { opacity: 0.5; }
+    .card.is-taken:hover { opacity: 0.7; }
+    .card.is-unknown { opacity: 0.65; }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .domain {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .status-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 3px;
+      border: 1px solid;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .status-badge .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .available { color: var(--green); background: rgba(57,255,122,0.1); border-color: rgba(57,255,122,0.3); }
+    .available .dot { background: var(--green); box-shadow: 0 0 4px var(--green); }
+    .taken     { color: var(--red); background: rgba(255,64,64,0.08); border-color: rgba(255,64,64,0.25); }
+    .taken .dot { background: var(--red); }
+    .unknown   { color: var(--amber); background: rgba(255,184,0,0.07); border-color: rgba(255,184,0,0.2); }
+    .unknown .dot { background: var(--amber); }
+    .checking  { color: var(--text-dim); background: transparent; border-color: var(--glass-border); }
+    .checking .dot { background: var(--text-dim); }
+
+    .card-msg { font-family: var(--mono); font-size: 11px; color: var(--text-dim); letter-spacing: 0.04em; }
+
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .btn {
+      padding: 6px 12px;
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: transparent;
+      color: var(--text-dim);
+      transition: all .14s;
+      text-decoration: none;
+      display: inline-block;
+      line-height: 1.4;
+    }
+    .btn:hover { border-color: rgba(57,255,122,0.3); color: var(--text-muted); }
+    .btn.primary {
+      background: var(--green);
+      color: #050d08;
+      border-color: var(--green);
+      font-weight: 800;
+      box-shadow: 0 0 12px rgba(57,255,122,0.2);
+    }
+    .btn.primary:hover { background: #fff; border-color: #fff; box-shadow: 0 0 20px rgba(57,255,122,0.3); }
+    .btn.saved { border-color: rgba(57,255,122,0.35); color: var(--green); background: rgba(57,255,122,0.08); }
+
+    /* ── Hero exact-match cards ── */
+    .exact-section { margin-bottom: 6px; }
+
+    .hero-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-lg);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      overflow: hidden;
+      margin-bottom: 6px;
+      transition: all .2s;
+      position: relative;
+    }
+    .hero-card::before,
+    .hero-card::after {
+      content: '';
+      position: absolute;
+      width: 10px; height: 10px;
+      border-color: var(--glass-border);
+      border-style: solid;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .hero-card::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
+    .hero-card::after  { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+
+    .hero-card-body {
+      padding: 20px 22px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .hero-domain {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+    }
+    .hero-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+    /* Status bar */
+    .hero-status-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 22px;
+      border-top: 1px solid var(--glass-border);
+    }
+    .hero-status-icon {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .hero-status-text { display: flex; flex-direction: column; gap: 2px; }
+    .hero-status-label {
+      font-family: var(--cond);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .hero-status-sub {
+      font-family: var(--mono);
+      font-size: 11px;
+      opacity: 0.55;
+      letter-spacing: 0.05em;
+    }
+
+    /* Available hero */
+    .hero-card.is-available {
+      border-color: rgba(57,255,122,0.4);
+      box-shadow: 0 0 0 1px rgba(57,255,122,0.1), 0 8px 40px rgba(57,255,122,0.1);
+    }
+    .hero-card.is-available::before,
+    .hero-card.is-available::after { border-color: rgba(57,255,122,0.5); }
+    .hero-card.is-available .hero-domain { color: #ffffff; }
+    .hero-card.is-available .hero-status-bar {
+      background: rgba(57,255,122,0.08);
+      border-top-color: rgba(57,255,122,0.2);
+    }
+    .hero-card.is-available .hero-status-icon {
+      background: rgba(57,255,122,0.15);
+      color: var(--green);
+      border: 1px solid rgba(57,255,122,0.35);
+    }
+    .hero-card.is-available .hero-status-label { color: var(--green); }
+    .hero-card.is-available .hero-status-sub   { color: var(--green); }
+
+    /* Taken hero */
+    .hero-card.is-taken {
+      border-color: rgba(255,64,64,0.2);
+      opacity: 0.7;
+    }
+    .hero-card.is-taken .hero-status-bar {
+      background: rgba(255,64,64,0.06);
+      border-top-color: rgba(255,64,64,0.18);
+    }
+    .hero-card.is-taken .hero-status-icon {
+      background: rgba(255,64,64,0.12);
+      color: var(--red);
+      border: 1px solid rgba(255,64,64,0.3);
+    }
+    .hero-card.is-taken .hero-status-label { color: var(--red); }
+    .hero-card.is-taken .hero-status-sub   { color: var(--red); }
+
+    /* Unknown hero */
+    .hero-card.is-unknown .hero-status-bar {
+      background: rgba(255,184,0,0.05);
+      border-top-color: rgba(255,184,0,0.15);
+    }
+    .hero-card.is-unknown .hero-status-icon {
+      background: rgba(255,184,0,0.1);
+      color: var(--amber);
+      border: 1px solid rgba(255,184,0,0.25);
+    }
+    .hero-card.is-unknown .hero-status-label { color: var(--amber); }
+    .hero-card.is-unknown .hero-status-sub   { color: var(--amber); }
+
+    /* ── Skeletons ── */
+    .hero-skeleton {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      margin-bottom: 6px;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    .hero-skel-body  { padding: 20px 22px 18px; }
+    .hero-skel-name  { height: 22px; width: 44%; background: rgba(57,255,122,0.08); border-radius: 3px; margin-bottom: 6px; }
+    .hero-skel-tld   { height: 12px; width: 16%; background: rgba(57,255,122,0.04); border-radius: 3px; }
+    .hero-skel-bar   { height: 52px; background: rgba(57,255,122,0.03); border-top: 1px solid var(--glass-border); }
+
+    .skeleton {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-md);
+      padding: 14px 16px;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    .skel-line { height: 11px; background: rgba(57,255,122,0.06); border-radius: 3px; margin-bottom: 7px; }
+    .skel-line.wide  { width: 45%; }
+    .skel-line.short { width: 20%; height: 9px; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .45; }
+    }
+
+    /* ── Variants divider ── */
+    .variants-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 18px 0 10px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .variants-divider::before,
+    .variants-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--glass-border);
+    }
+
+    /* ── Fav actions / empty ── */
+    .empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .empty strong { color: var(--text-muted); display: block; margin-bottom: 6px; }
+
+    .fav-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    /* ── 1. Custom SVG reticle cursor ── */
+    *, *::before, *::after { cursor: none !important; }
+
+    #cursor {
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 99999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.06s ease;
+      will-change: transform;
+    }
+
+    /* The SVG scales for different states */
+    #cursor svg {
+      display: block;
+      transition: width .2s ease, height .2s ease, opacity .2s ease;
+      overflow: visible;
+    }
+
+    /* State: hovering a clickable — scale up + slow spin */
+    body.cur-click #cursor svg {
+      width: 52px; height: 52px;
+      animation: spin-reticle 3s linear infinite;
+    }
+    /* State: hovering an available target — pulse outward */
+    body.cur-acquire #cursor svg {
+      width: 56px; height: 56px;
+      animation: pulse-reticle .8s ease-in-out infinite alternate;
+    }
+    /* State: hovering a taken target — compress + X appears */
+    body.cur-occupied #cursor svg {
+      width: 32px; height: 32px;
+      opacity: 0.7;
+    }
+    body.cur-occupied #cur-x { opacity: 1; }
+    /* State: hovering text input — shrink to fine crosshair */
+    body.cur-text #cursor svg {
+      width: 24px; height: 24px;
+    }
+    body.cur-text #cur-circle { opacity: 0; }
+
+    #cur-x { opacity: 0; transition: opacity .15s; }
+
+    @keyframes spin-reticle {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes pulse-reticle {
+      from { width: 44px; height: 44px; }
+      to   { width: 60px; height: 60px; }
+    }
+
+    /* ── 2. Scope watermark ring behind the headline ── */
+    .hero {
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 340px; height: 340px;
+      border-radius: 50%;
+      border: 1px solid rgba(57,255,122,0.07);
+      top: 50%; left: -60px;
+      transform: translateY(-50%);
+      pointer-events: none;
+      box-shadow: 0 0 0 60px rgba(57,255,122,0.02), inset 0 0 60px rgba(57,255,122,0.02);
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      border: 1px solid rgba(57,255,122,0.05);
+      top: 50%; left: 10px;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    /* Scope crosshair lines through the ring */
+    .scope-lines {
+      position: absolute;
+      top: 50%; left: -60px;
+      width: 340px; height: 340px;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    .scope-lines::before,
+    .scope-lines::after {
+      content: '';
+      position: absolute;
+      background: rgba(57,255,122,0.07);
+    }
+    .scope-lines::before { width: 1px; height: 100%; left: 50%; top: 0; }
+    .scope-lines::after  { height: 1px; width: 100%; top: 50%; left: 0; }
+
+    /* ── 3. Target reticle brackets around available hero domain ── */
+    .reticle-wrap {
+      position: relative;
+      display: inline-block;
+      padding: 6px 10px;
+    }
+    .reticle-wrap::before,
+    .reticle-wrap::after,
+    .reticle-wrap .rb,
+    .reticle-wrap .lb {
+      content: '';
+      position: absolute;
+      width: 10px; height: 10px;
+      border-color: var(--green);
+      border-style: solid;
+      opacity: 0;
+      transition: opacity .4s, transform .4s;
+    }
+    .reticle-wrap::before { top: 0;    left: 0;  border-width: 1px 0 0 1px; transform: translate(-4px,-4px); }
+    .reticle-wrap::after  { bottom: 0; right: 0; border-width: 0 1px 1px 0; transform: translate(4px, 4px); }
+    .reticle-wrap .rb     { top: 0;    right: 0; border-width: 1px 1px 0 0; transform: translate(4px,-4px); }
+    .reticle-wrap .lb     { bottom: 0; left: 0;  border-width: 0 0 1px 1px; transform: translate(-4px, 4px); }
+
+    .hero-card.is-available .reticle-wrap::before,
+    .hero-card.is-available .reticle-wrap::after,
+    .hero-card.is-available .reticle-wrap .rb,
+    .hero-card.is-available .reticle-wrap .lb {
+      opacity: 0.7;
+      transform: translate(0,0);
+      animation: reticle-pulse 3s ease-in-out infinite;
+    }
+    .hero-card.is-available .reticle-wrap::after { animation-delay: .15s; }
+    .hero-card.is-available .reticle-wrap .rb    { animation-delay: .08s; }
+    .hero-card.is-available .reticle-wrap .lb    { animation-delay: .22s; }
+
+    @keyframes reticle-pulse {
+      0%, 100% { opacity: 0.7; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* ── 4. Scan-line sweep on skeletons ── */
+    .skeleton,
+    .hero-skeleton {
+      overflow: hidden;
+      position: relative;
+    }
+    .skeleton::after,
+    .hero-skeleton::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(57,255,122,0.06) 48%,
+        rgba(57,255,122,0.12) 50%,
+        rgba(57,255,122,0.06) 52%,
+        transparent 100%
+      );
+      animation: scan 1.8s ease-in-out infinite;
+    }
+    @keyframes scan {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* ── 5. Acquire button: bullet → cursor transform ── */
+    #searchBtn {
+      position: relative;
+      overflow: hidden;
+    }
+    #searchBtn .btn-bullet {
+      display: inline-block;
+      width: 7px; height: 7px;
+      background: #050d08;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin-right: 7px;
+      transition: transform .35s cubic-bezier(.4,0,.2,1), border-radius .35s;
+      flex-shrink: 0;
+    }
+    #searchBtn:hover .btn-bullet {
+      border-radius: 0 50% 50% 0;
+      transform: translateX(3px) scaleX(1.5);
+    }
+    #searchBtn:disabled .btn-bullet { opacity: 0; }
+
+    /* Progress bar glows brighter while scanning */
+    #progress-bar.scanning {
+      box-shadow: 0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.4);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(57,255,122,0.15); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- Custom reticle cursor -->
+  <div id="cursor" aria-hidden="true">
+    <svg id="cursor-svg" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Outer circle -->
+      <circle id="cur-circle" cx="20" cy="20" r="13" stroke="#ff2020" stroke-width="1.5"/>
+      <!-- Inner dot -->
+      <circle cx="20" cy="20" r="1.5" fill="#ff2020"/>
+      <!-- Crosshair lines - top -->
+      <line x1="20" y1="2"  x2="20" y2="7"  stroke="#ff2020" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- bottom -->
+      <line x1="20" y1="33" x2="20" y2="38" stroke="#ff2020" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- left -->
+      <line x1="2"  y1="20" x2="7"  y2="20" stroke="#ff2020" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- right -->
+      <line x1="33" y1="20" x2="38" y2="20" stroke="#ff2020" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- X overlay (taken state) -->
+      <g id="cur-x">
+        <line x1="14" y1="14" x2="26" y2="26" stroke="#ff2020" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="26" y1="14" x2="14" y2="26" stroke="#ff2020" stroke-width="1.5" stroke-linecap="round"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Sniper background -->
+  <div class="bg-image" aria-hidden="true">
+    <img id="bg-img" src="" alt="" />
+  </div>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-sweep" aria-hidden="true"></div>
+
+  <div class="page">
+
+    <!-- Brand bar -->
+    <div class="brand">
+      <div class="brand-reticle">
+        <div class="brand-crosshair"></div>
+      </div>
+      <a href="/" class="brand-name">URLsniper</a>
+      <div class="brand-sep"></div>
+      <span class="brand-sub">Domain acquisition system</span>
+    </div>
+
+    <!-- Hero -->
+    <header class="hero">
+      <div class="scope-lines" aria-hidden="true"></div>
+      <div class="hero-eyebrow">Target acquisition</div>
+      <h1>Lock on.<br><span>Lock down.</span></h1>
+      <p class="hero-sub">Acquire · Verify · Register</p>
+    </header>
+
+    <!-- Search -->
+    <div class="search-panel">
+      <div class="search-row">
+        <input id="keyword" type="text" placeholder="Enter target, e.g. nova, swift, atlas…"
+          autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
+        <button id="searchBtn"><span class="btn-bullet"></span>Acquire</button>
+      </div>
+      <div class="tlds">
+        <label class="chip"><input type="checkbox" value="com" checked> .com</label>
+        <label class="chip"><input type="checkbox" value="net" checked> .net</label>
+        <label class="chip"><input type="checkbox" value="io"  checked> .io</label>
+        <label class="chip"><input type="checkbox" value="app" checked> .app</label>
+        <label class="chip"><input type="checkbox" value="dev" checked> .dev</label>
+        <label class="chip"><input type="checkbox" value="co"> .co</label>
+        <label class="chip"><input type="checkbox" value="ai"> .ai</label>
+      </div>
+    </div>
+
+    <!-- Recalibrate -->
+    <button id="recalibrateBtn">
+      <span class="recal-icon">↺</span> Recalibrate
+    </button>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="results">
+        Contacts <span class="tab-count" id="results-count">0</span>
+      </button>
+      <button class="tab" data-tab="favorites">
+        Shortlist <span class="tab-count" id="fav-count">0</span>
+      </button>
+    </div>
+
+    <!-- Results panel -->
+    <div class="panel active" id="panel-results">
+      <div id="progress-bar"></div>
+      <div id="status-msg">System ready. Enter target to begin.</div>
+      <div id="exact-results" class="exact-section"></div>
+      <div id="variants-divider" class="variants-divider" style="display:none">Adjacent targets</div>
+      <div id="results" class="results"></div>
+    </div>
+
+    <!-- Favorites panel -->
+    <div class="panel" id="panel-favorites">
+      <div class="fav-actions">
+        <button class="btn" id="exportBtn">Export CSV</button>
+        <button class="btn" id="clearFavsBtn">Clear shortlist</button>
+      </div>
+      <div id="favorites" class="results"></div>
+    </div>
+
+  </div>
+
+  <script>
+    /* ── Random background ── */
+    (function() {
+      const backgrounds = [
+        'SF_Sniper.png',
+        'SF_Sniper2.png',
+      ];
+      const pick = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+      document.getElementById('bg-img').src = pick;
+    })();
+
+    let searchInProgress = false;
+    const prefixes = ['get', 'go', 'try', 'use', 'my', 'the', 'hey'];
+    const suffixes = ['hq', 'lab', 'hub', 'base', 'works', 'now', 'app', 'ly'];
+
+    const keywordEl    = document.getElementById('keyword');
+    const searchBtn    = document.getElementById('searchBtn');
+    const resultsEl    = document.getElementById('results');
+    const statusMsg    = document.getElementById('status-msg');
+    const progressBar  = document.getElementById('progress-bar');
+    const resultsCount = document.getElementById('results-count');
+    const favCount     = document.getElementById('fav-count');
+    const recalBtn     = document.getElementById('recalibrateBtn');
+
+    // ── Tabs ──────────────────────────────────────────────────────────────
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+        if (tab.dataset.tab === 'favorites') renderFavorites();
+      });
+    });
+
+    // ── Recalibrate ───────────────────────────────────────────────────────
+    recalBtn.addEventListener('click', () => {
+      // Reset everything — no page reload needed
+      document.getElementById('exact-results').innerHTML = '';
+      resultsEl.innerHTML = '';
+      document.getElementById('variants-divider').style.display = 'none';
+      statusMsg.textContent = 'System ready. Enter target to begin.';
+      resultsCount.textContent = '0';
+      progressBar.style.width = '0%';
+      resultCache.clear();
+      recalBtn.classList.remove('visible');
+      keywordEl.value = '';
+      keywordEl.focus();
+      // Switch to results tab
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-tab="results"]').classList.add('active');
+      document.getElementById('panel-results').classList.add('active');
+    });
+
+    // ── Utilities ────────────────────────────────────────────────────────
+    function slugify(value) {
+      return value.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '');
+    }
+
+    function parseInput(raw) {
+      let s = raw.trim().toLowerCase();
+      s = s.replace(/^https?:\/\//, '').replace(/^www\./, '');
+      const dot = s.lastIndexOf('.');
+      if (dot > 0) s = s.slice(0, dot);
+      return slugify(s);
+    }
+
+    function selectedTlds() {
+      return [...document.querySelectorAll('.tlds input:checked')].map(i => i.value);
+    }
+
+    function generateCandidates(keyword) {
+      const base = slugify(keyword);
+      if (!base) return [];
+      const set = new Set([
+        base,
+        ...prefixes.map(p => `${p}${base}`),
+        ...suffixes.map(s => `${base}${s}`),
+        ...prefixes.flatMap(p => suffixes.map(s => `${p}${base}${s}`))
+      ]);
+      return [...set].slice(0, 30);
+    }
+
+    // ── Favorites ─────────────────────────────────────────────────────────
+    function getFavorites() { return JSON.parse(localStorage.getItem('domain-favorites') || '[]'); }
+    function setFavorites(arr) {
+      localStorage.setItem('domain-favorites', JSON.stringify(arr));
+      favCount.textContent = arr.length;
+    }
+    function isFavorite(d) { return getFavorites().includes(d); }
+    function toggleFavorite(domain) {
+      const favs = getFavorites();
+      const idx  = favs.indexOf(domain);
+      if (idx === -1) { favs.push(domain); } else { favs.splice(idx, 1); }
+      setFavorites(favs);
+      return idx === -1;
+    }
+
+    // ── Cache & helpers ───────────────────────────────────────────────────
+    const resultCache = new Map();
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // ── Domain check: Worker → RDAP → DoH ────────────────────────────────
+    async function checkDomain(domain) {
+      if (resultCache.has(domain)) return resultCache.get(domain);
+      let result;
+      try {
+        const res = await fetch(`/api/check?domain=${encodeURIComponent(domain)}`);
+        if (!res.ok) throw new Error('no worker');
+        result = await res.json();
+      } catch {
+        result = await clientRdap(domain);
+      }
+      if (result.status === 'unknown') result = await dohCheck(domain);
+      resultCache.set(domain, result);
+      return result;
+    }
+
+    async function clientRdap(domain) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      try {
+        const res = await fetch(`https://rdap.org/domain/${domain}`, {
+          signal: controller.signal,
+          headers: { accept: 'application/rdap+json, application/json' }
+        });
+        clearTimeout(timer);
+        if (res.status === 404) return { domain, status: 'available', message: 'No registration record found.' };
+        if (res.ok)             return { domain, status: 'taken',     message: 'Registration record found.' };
+        return { domain, status: 'unknown', message: 'RDAP inconclusive.' };
+      } catch {
+        clearTimeout(timer);
+        return { domain, status: 'unknown', message: 'RDAP unreachable.' };
+      }
+    }
+
+    async function dohCheck(domain) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      try {
+        const res = await fetch(
+          `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=A`,
+          { signal: controller.signal, headers: { accept: 'application/dns-json' } }
+        );
+        clearTimeout(timer);
+        if (!res.ok) return { domain, status: 'unknown', message: 'Signal lost.' };
+        const data = await res.json();
+        if (data.Status === 3)                      return { domain, status: 'available', message: 'No DNS records — target clear.' };
+        if (data.Status === 0 && data.Answer?.length) return { domain, status: 'taken',   message: 'Active DNS records found.' };
+        if (data.Status === 0)                       return { domain, status: 'taken',    message: 'Domain exists in DNS.' };
+        return { domain, status: 'unknown', message: 'Signal lost.' };
+      } catch {
+        clearTimeout(timer);
+        return { domain, status: 'unknown', message: 'Signal lost.' };
+      }
+    }
+
+    function buyLink() { return 'https://www.cloudflare.com/products/registrar/'; }
+
+    // ── Variant card ─────────────────────────────────────────────────────
+    function makeCard(result, inFavPanel = false) {
+      const statusMap = {
+        available: ['available', 'Clear'],
+        taken:     ['taken',     'Occupied'],
+        unknown:   ['unknown',   'No signal'],
+        checking:  ['checking',  'Scanning…'],
+      };
+      const [cls, label] = statusMap[result.status] || statusMap.unknown;
+      const saved = isFavorite(result.domain);
+
+      const card = document.createElement('div');
+      card.className = `card is-${result.status}`;
+      card.dataset.domain = result.domain;
+      card.dataset.status = result.status;
+      card.innerHTML = `
+        <div class="card-top">
+          <div class="domain">${result.domain}</div>
+          <div class="status-badge ${cls}"><span class="dot"></span>${label}</div>
+        </div>
+        ${result.message ? `<div class="card-msg">${result.message}</div>` : ''}
+        <div class="actions">
+          <button class="btn copy-btn">Copy</button>
+          <button class="btn save-btn ${saved ? 'saved' : ''}">${saved ? '✦ Saved' : 'Mark'}</button>
+          <a class="btn primary" href="${buyLink()}" target="_blank" rel="noopener">Register →</a>
+        </div>
+      `;
+      card.querySelector('.copy-btn').addEventListener('click', async (e) => {
+        await navigator.clipboard.writeText(result.domain);
+        e.target.textContent = 'Copied!';
+        setTimeout(() => { e.target.textContent = 'Copy'; }, 1500);
+      });
+      card.querySelector('.save-btn').addEventListener('click', (e) => {
+        const nowSaved = toggleFavorite(result.domain);
+        e.target.textContent = nowSaved ? '✦ Saved' : 'Mark';
+        e.target.classList.toggle('saved', nowSaved);
+        if (inFavPanel) renderFavorites();
+      });
+      return card;
+    }
+
+    function makeSkeleton() {
+      const el = document.createElement('div');
+      el.className = 'skeleton';
+      el.innerHTML = `<div class="skel-line wide"></div><div class="skel-line short"></div>`;
+      return el;
+    }
+
+    // ── Hero card ─────────────────────────────────────────────────────────
+    function makeHeroCard(result, inFavPanel = false) {
+      const statusMap = {
+        available: ['✓', 'Target Clear',    'No existing registration — ready to acquire.'],
+        taken:     ['✕', 'Target Occupied', 'Already registered. Check adjacent targets.'],
+        unknown:   ['?', 'Signal Lost',     'Registry did not return a clear answer.'],
+        checking:  ['…', 'Scanning…',       ''],
+      };
+      const [icon, label, sub] = statusMap[result.status] || statusMap.unknown;
+      const saved = isFavorite(result.domain);
+
+      const card = document.createElement('div');
+      card.className = `hero-card is-${result.status}`;
+      card.dataset.domain = result.domain;
+      card.dataset.status = result.status;
+      card.innerHTML = `
+        <div class="hero-card-body">
+          <div class="hero-domain">
+            <div class="reticle-wrap"><span class="rb"></span><span class="lb"></span>${result.domain}</div>
+          </div>
+          <div class="hero-actions">
+            <button class="btn copy-btn">Copy</button>
+            <button class="btn save-btn ${saved ? 'saved' : ''}">${saved ? '✦ Saved' : 'Mark'}</button>
+            <a class="btn primary" href="${buyLink()}" target="_blank" rel="noopener">Register →</a>
+          </div>
+        </div>
+        <div class="hero-status-bar">
+          <span class="hero-status-icon">${icon}</span>
+          <div class="hero-status-text">
+            <span class="hero-status-label">${label}</span>
+            ${sub ? `<span class="hero-status-sub">${sub}</span>` : ''}
+          </div>
+        </div>
+      `;
+      card.querySelector('.copy-btn').addEventListener('click', async (e) => {
+        await navigator.clipboard.writeText(result.domain);
+        e.target.textContent = 'Copied!';
+        setTimeout(() => { e.target.textContent = 'Copy'; }, 1500);
+      });
+      card.querySelector('.save-btn').addEventListener('click', (e) => {
+        const nowSaved = toggleFavorite(result.domain);
+        e.target.textContent = nowSaved ? '✦ Saved' : 'Mark';
+        e.target.classList.toggle('saved', nowSaved);
+        if (inFavPanel) renderFavorites();
+      });
+      return card;
+    }
+
+    function makeHeroSkeleton(domain) {
+      const el = document.createElement('div');
+      el.className = 'hero-skeleton';
+      el.dataset.domain = domain;
+      el.innerHTML = `
+        <div class="hero-skel-body"><div class="hero-skel-name"></div><div class="hero-skel-tld"></div></div>
+        <div class="hero-skel-bar"></div>
+      `;
+      return el;
+    }
+
+    // ── Favorites panel ───────────────────────────────────────────────────
+    function renderFavorites() {
+      const favsEl = document.getElementById('favorites');
+      const favs   = getFavorites();
+      favsEl.innerHTML = '';
+      if (!favs.length) {
+        favsEl.innerHTML = `<div class="empty"><strong>Shortlist empty</strong>Mark any result to add it here.</div>`;
+        return;
+      }
+      favs.forEach(domain => favsEl.appendChild(makeCard({ domain, status: 'unknown', message: '' }, true)));
+    }
+
+    document.getElementById('clearFavsBtn').addEventListener('click', () => {
+      if (!confirm('Clear shortlist?')) return;
+      setFavorites([]); renderFavorites();
+    });
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const favs = getFavorites();
+      if (!favs.length) { alert('Shortlist is empty.'); return; }
+      const blob = new Blob(['domain\n' + favs.join('\n')], { type: 'text/csv' });
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement('a'), { href: url, download: 'urlsniper-shortlist.csv' });
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // ── Main search ───────────────────────────────────────────────────────
+    async function runSearch() {
+      const keyword = keywordEl.value.trim();
+      if (!keyword) { keywordEl.focus(); return; }
+      if (searchInProgress) return;
+
+      const tlds = selectedTlds();
+      if (!tlds.length) { alert('Select at least one TLD.'); return; }
+
+      const base = parseInput(keyword);
+      if (!base) { statusMsg.textContent = 'Could not parse target.'; return; }
+
+      const exactDomains   = tlds.map(tld => `${base}.${tld}`);
+      const allBases       = generateCandidates(keyword).filter(b => b !== base);
+      const variantDomains = allBases.flatMap(b => tlds.map(tld => `${b}.${tld}`)).slice(0, 42);
+      const totalCount     = exactDomains.length + variantDomains.length;
+
+      resultCache.clear();
+      searchInProgress = true;
+      searchBtn.disabled = true;
+      searchBtn.textContent = 'Scanning…';
+      recalBtn.classList.remove('visible');
+      statusMsg.textContent = `Scanning ${totalCount} targets…`;
+      resultsCount.textContent = '0';
+      progressBar.style.width  = '0%';
+      progressBar.classList.add('scanning');
+
+      const exactEl   = document.getElementById('exact-results');
+      const dividerEl = document.getElementById('variants-divider');
+      exactEl.innerHTML   = '';
+      resultsEl.innerHTML = '';
+      dividerEl.style.display = 'none';
+
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-tab="results"]').classList.add('active');
+      document.getElementById('panel-results').classList.add('active');
+
+      exactDomains.forEach(domain => exactEl.appendChild(makeHeroSkeleton(domain)));
+      variantDomains.forEach(domain => {
+        const sk = makeSkeleton(); sk.dataset.domain = domain; resultsEl.appendChild(sk);
+      });
+      dividerEl.style.display = 'flex';
+
+      let completed = 0;
+      const onProgress = () => {
+        completed++;
+        progressBar.style.width  = `${Math.round((completed / totalCount) * 100)}%`;
+        statusMsg.textContent    = `Scanning… ${completed} / ${totalCount}`;
+        resultsCount.textContent = completed;
+      };
+
+      await Promise.all(exactDomains.map(async (domain, i) => {
+        if (i > 0) await sleep(i * 120);
+        const result = await checkDomain(domain);
+        onProgress();
+        const sk = exactEl.querySelector(`[data-domain="${domain}"]`);
+        if (sk) sk.replaceWith(makeHeroCard(result));
+      }));
+
+      const CONCURRENCY = 3;
+      const queue = [...variantDomains];
+      const workers = Array.from({ length: CONCURRENCY }, async (_, wi) => {
+        await sleep(wi * 150);
+        while (queue.length) {
+          const domain = queue.shift();
+          const result = await checkDomain(domain);
+          onProgress();
+          const sk = resultsEl.querySelector(`[data-domain="${domain}"]`);
+          if (sk) {
+            const newCard = makeCard(result);
+            sk.replaceWith(newCard);
+            if (result.status === 'available') resultsEl.prepend(newCard);
+          }
+        }
+      });
+      await Promise.all(workers);
+
+      const order = { available: 0, unknown: 1, taken: 2 };
+      [...resultsEl.children]
+        .sort((a, b) => (order[a.dataset.status] ?? 3) - (order[b.dataset.status] ?? 3))
+        .forEach(el => resultsEl.appendChild(el));
+
+      const availExact   = exactEl.querySelectorAll('[data-status="available"]').length;
+      const availVariant = resultsEl.querySelectorAll('[data-status="available"]').length;
+      const totalAvail   = availExact + availVariant;
+      statusMsg.textContent = totalAvail > 0
+        ? `Mission complete — ${totalAvail} targets clear out of ${totalCount} scanned.`
+        : `Scan complete — ${totalCount} targets checked. No clear targets found.`;
+      resultsCount.textContent = totalCount;
+      progressBar.style.width  = '100%';
+      progressBar.classList.remove('scanning');
+      setTimeout(() => { progressBar.style.width = '0%'; }, 800);
+      searchBtn.disabled   = false;
+      searchBtn.textContent = 'Acquire';
+      searchInProgress     = false;
+      recalBtn.classList.add('visible');
+    }
+
+    searchBtn.addEventListener('click', runSearch);
+    keywordEl.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+    favCount.textContent = getFavorites().length;
+
+    // ── Custom reticle cursor ─────────────────────────────────────────────
+    const cursorEl = document.getElementById('cursor');
+    let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+    let cx = mx, cy = my;
+
+    // Smooth follow with lerp
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    (function loop() {
+      cx = lerp(cx, mx, 0.18);
+      cy = lerp(cy, my, 0.18);
+      cursorEl.style.left = cx + 'px';
+      cursorEl.style.top  = cy + 'px';
+      requestAnimationFrame(loop);
+    })();
+
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+
+    // Hide when leaving window
+    document.addEventListener('mouseleave', () => { cursorEl.style.opacity = '0'; });
+    document.addEventListener('mouseenter', () => { cursorEl.style.opacity = '1'; });
+
+    // ── Contextual states ─────────────────────────────────────────────────
+    const CURSOR_STATES = ['cur-click', 'cur-acquire', 'cur-occupied', 'cur-text'];
+    function setCursor(state) {
+      CURSOR_STATES.forEach(s => document.body.classList.remove(s));
+      if (state) document.body.classList.add(state);
+    }
+
+    document.addEventListener('mouseover', e => {
+      const el = e.target.closest('[data-cursor], button, a, input, label, .card, .hero-card');
+      if (!el) { setCursor(null); return; }
+
+      // Explicit override
+      if (el.dataset.cursor) { setCursor(el.dataset.cursor); return; }
+
+      // Input fields — fine crosshair
+      if (el.tagName === 'INPUT') { setCursor('cur-text'); return; }
+
+      // Available hero card — pulse outward
+      if (el.closest('.hero-card.is-available')) { setCursor('cur-acquire'); return; }
+
+      // Taken card — compress + X
+      if (el.closest('.hero-card.is-taken') || el.closest('.card.is-taken')) {
+        setCursor('cur-occupied'); return;
+      }
+
+      // Buttons, links, labels — spin
+      if (['BUTTON','A','LABEL'].includes(el.tagName) || el.closest('button, a, label')) {
+        setCursor('cur-click'); return;
+      }
+
+      setCursor(null);
+    });
+  </script>
+</body>
+</html>
