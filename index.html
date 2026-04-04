@@ -1308,9 +1308,9 @@
     // ── Variant card ─────────────────────────────────────────────────────
     function makeCard(result, inFavPanel = false) {
       const statusMap = {
-        available: ['available', 'Clear'],
-        taken:     ['taken',     'Occupied'],
-        unknown:   ['unknown',   'No signal'],
+        available: ['available', 'Available'],
+        taken:     ['taken',     'URL Taken'],
+        unknown:   ['unknown',   'URL Taken'],
         checking:  ['checking',  'Scanning…'],
       };
       const [cls, label] = statusMap[result.status] || statusMap.unknown;
@@ -1421,7 +1421,10 @@
         favsEl.innerHTML = `<div class="empty"><strong>Shortlist empty</strong>Mark any result to add it here.</div>`;
         return;
       }
-      favs.forEach(domain => favsEl.appendChild(makeCard({ domain, status: 'unknown', message: '' }, true)));
+      favs.forEach(domain => {
+        const cached = resultCache.get(domain) || { domain, status: 'unknown', message: '' };
+        favsEl.appendChild(makeCard(cached, true));
+      });
     }
 
     document.getElementById('clearFavsBtn').addEventListener('click', () => {
