@@ -748,6 +748,12 @@
     /* ── 1. Custom SVG reticle cursor ── */
     *, *::before, *::after { cursor: none !important; }
 
+    /* Restore normal cursor and hide reticle on touch devices */
+    @media (pointer: coarse) {
+      *, *::before, *::after { cursor: auto !important; }
+      #cursor { display: none !important; }
+    }
+
     #cursor {
       position: fixed;
       top: 0; left: 0;
@@ -1514,24 +1520,28 @@
 
     // ── Custom reticle cursor ─────────────────────────────────────────────
     const cursorEl = document.getElementById('cursor');
-    let mx = window.innerWidth / 2, my = window.innerHeight / 2;
-    let cx = mx, cy = my;
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
-    // Smooth follow with lerp
-    function lerp(a, b, t) { return a + (b - a) * t; }
-    (function loop() {
-      cx = lerp(cx, mx, 0.18);
-      cy = lerp(cy, my, 0.18);
-      cursorEl.style.left = cx + 'px';
-      cursorEl.style.top  = cy + 'px';
-      requestAnimationFrame(loop);
-    })();
+    if (!isTouchDevice) {
+      let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+      let cx = mx, cy = my;
 
-    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+      // Smooth follow with lerp
+      function lerp(a, b, t) { return a + (b - a) * t; }
+      (function loop() {
+        cx = lerp(cx, mx, 0.18);
+        cy = lerp(cy, my, 0.18);
+        cursorEl.style.left = cx + 'px';
+        cursorEl.style.top  = cy + 'px';
+        requestAnimationFrame(loop);
+      })();
 
-    // Hide when leaving window
-    document.addEventListener('mouseleave', () => { cursorEl.style.opacity = '0'; });
-    document.addEventListener('mouseenter', () => { cursorEl.style.opacity = '1'; });
+      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+
+      // Hide when leaving window
+      document.addEventListener('mouseleave', () => { cursorEl.style.opacity = '0'; });
+      document.addEventListener('mouseenter', () => { cursorEl.style.opacity = '1'; });
+    }
 
     // ── Bullet impacts ────────────────────────────────────────────────────
     const INTERACTIVE = 'a, button, input, label, select, textarea, [role="button"], .tab, .tld-btn, .card, .hero-card';
